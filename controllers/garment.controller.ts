@@ -1,15 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import {
   createGarment,
   deleteGarment,
   getAllGarments,
   getGarmentById,
+  getGarmentsByOwner,
   updateGarment,
 } from "@/models/garment.model";
 import { validateGarmentPayload } from "@/lib/validations/garment.validation";
 import { getStyleById } from "@/models/style.model";
 
-export async function indexGarmentsController() {
+async function getAuthenticatedUser(req: NextRequest) {
+  const supabase = await createClient();
+
+  const token = req.headers
+    .get("authorization")
+    ?.replace("Bearer ", "");
+
+  if (!token) return null;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+
+  return user;
+}
+
+export async function indexGarmentsController(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuario no autenticado." },
+      { status: 401 }
+    );
+  }
+
+  const { data, error } = await getGarmentsByOwner(user.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  return NextResponse.json(data, { status: 200 });
+}
+
+export async function indexAllGarmentsController() {
   const { data, error } = await getAllGarments();
 
   if (error) {
@@ -19,11 +56,30 @@ export async function indexGarmentsController() {
   return NextResponse.json(data, { status: 200 });
 }
 
-export async function showGarmentController(id: string) {
+export async function showGarmentController(req: NextRequest, id: string) {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuario no autenticado." },
+      { status: 401 }
+    );
+  }
+
   const { data, error } = await getGarmentById(id);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error || !data) {
+    return NextResponse.json(
+      { error: "Prenda no encontrada." },
+      { status: 404 }
+    );
+  }
+
+  if (data.owner_id !== user.id) {
+    return NextResponse.json(
+      { error: "No tienes permiso para ver esta prenda." },
+      { status: 403 }
+    );
   }
 
   return NextResponse.json(data, { status: 200 });
@@ -40,6 +96,15 @@ async function validateStyleExists(styleId: string) {
 }
 
 export async function storeGarmentController(req: NextRequest) {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuario no autenticado." },
+      { status: 401 }
+    );
+  }
+
   const body = await req.json();
 
   const validationError = validateGarmentPayload(body);
@@ -61,6 +126,7 @@ export async function storeGarmentController(req: NextRequest) {
   }
 
   const { data, error } = await createGarment({
+    owner_id: user.id,
     title: body.title,
     description: body.description,
     size: body.size,
@@ -80,6 +146,31 @@ export async function updateGarmentController(
   req: NextRequest,
   id: string
 ) {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuario no autenticado." },
+      { status: 401 }
+    );
+  }
+
+  const existingGarment = await getGarmentById(id);
+
+  if (existingGarment.error || !existingGarment.data) {
+    return NextResponse.json(
+      { error: "Prenda no encontrada." },
+      { status: 404 }
+    );
+  }
+
+  if (existingGarment.data.owner_id !== user.id) {
+    return NextResponse.json(
+      { error: "No tienes permiso para editar esta prenda." },
+      { status: 403 }
+    );
+  }
+
   const body = await req.json();
 
   const validationError = validateGarmentPayload(body);
@@ -116,7 +207,35 @@ export async function updateGarmentController(
   return NextResponse.json(data, { status: 200 });
 }
 
-export async function destroyGarmentController(id: string) {
+export async function destroyGarmentController(
+  req: NextRequest,
+  id: string
+) {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return NextResponse.json(
+      { error: "Usuario no autenticado." },
+      { status: 401 }
+    );
+  }
+
+  const existingGarment = await getGarmentById(id);
+
+  if (existingGarment.error || !existingGarment.data) {
+    return NextResponse.json(
+      { error: "Prenda no encontrada." },
+      { status: 404 }
+    );
+  }
+
+  if (existingGarment.data.owner_id !== user.id) {
+    return NextResponse.json(
+      { error: "No tienes permiso para eliminar esta prenda." },
+      { status: 403 }
+    );
+  }
+
   const { error } = await deleteGarment(id);
 
   if (error) {

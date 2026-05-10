@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Garment } from "@/types/garment";
 import { Style } from "@/types/style";
+import { createClient } from "@/lib/supabase/browser";
 
 type GarmentFormProps = {
   initialData?: Garment;
@@ -17,21 +18,32 @@ export default function GarmentForm({
   styles = [],
 }: GarmentFormProps) {
   const router = useRouter();
+  const supabase = createClient();
 
- const [form, setForm] = useState({
-  title: initialData?.title || "",
-  description: initialData?.description || "",
-  size: initialData?.size || "",
-  brand: initialData?.brand || "",
-  condition: initialData?.condition || "",
-  style_id: initialData?.style_id || "",
-});
+  const [form, setForm] = useState({
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    size: initialData?.size || "",
+    brand: initialData?.brand || "",
+    condition: initialData?.condition || "",
+    style_id: initialData?.style_id || "",
+  });
 
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      alert("Usuario no autenticado.");
+      setLoading(false);
+      return;
+    }
 
     const endpoint =
       mode === "create"
@@ -44,6 +56,7 @@ export default function GarmentForm({
       method,
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(form),
     });
@@ -80,13 +93,26 @@ export default function GarmentForm({
         </div>
 
         <div className="form-group">
+          <label htmlFor="description">Descripción</label>
+          <textarea
+            id="description"
+            rows={4}
+            placeholder="Describe la prenda"
+            value={form.description}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="form-group">
           <label htmlFor="size">Talla</label>
           <select
             id="size"
             value={form.size}
             onChange={(e) => setForm({ ...form, size: e.target.value })}
             required
-        >
+          >
             <option value="">Selecciona una talla</option>
             <option value="XS">XS</option>
             <option value="S">S</option>
@@ -94,8 +120,8 @@ export default function GarmentForm({
             <option value="L">L</option>
             <option value="XL">XL</option>
             <option value="XXL">XXL</option>
-         </select>
-      </div>
+          </select>
+        </div>
 
         <div className="form-group">
           <label htmlFor="brand">Marca</label>
@@ -110,7 +136,6 @@ export default function GarmentForm({
 
         <div className="form-group">
           <label htmlFor="style">Estilo</label>
-
           <select
             id="style"
             value={form.style_id}
@@ -118,16 +143,16 @@ export default function GarmentForm({
               setForm({ ...form, style_id: e.target.value })
             }
             required
-           >
-         <option value="">Selecciona un estilo</option>
+          >
+            <option value="">Selecciona un estilo</option>
 
-          {styles.map((style) => (
-            <option key={style.id} value={style.id}>
-              {style.name}
-            </option>
-          ))}
-        </select>
-      </div>
+            {styles.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="form-group">
           <label htmlFor="condition">Estado</label>

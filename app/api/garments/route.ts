@@ -4,10 +4,10 @@ import {
   storeGarmentController,
 } from "@/controllers/garment.controller";
 
-export async function GET() {
-  return indexGarmentsController();
+export async function GET(request: NextRequest) {
+  return indexGarmentsController(request);
 }
 
-export async function POST(req: NextRequest) {
-  return storeGarmentController(req);
+export async function POST(request: NextRequest) {
+  return storeGarmentController(request);
 }

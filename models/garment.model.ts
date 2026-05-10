@@ -20,12 +20,13 @@ export async function getGarmentById(id: string) {
     .single();
 }
 
-export async function createGarment(data: GarmentPayload) {
+export async function createGarment(data: GarmentPayload & { owner_id: string }) {
   const supabase = await createClient();
 
   return supabase
     .from("garments")
     .insert({
+      owner_id: data.owner_id,
       title: data.title,
       description: data.description || null,
       size: data.size,
@@ -62,4 +63,20 @@ export async function deleteGarment(id: string) {
     .from("garments")
     .delete()
     .eq("id", id);
+}
+
+export async function getGarmentsByOwner(ownerId: string) {
+  const supabase = await createClient();
+
+  return supabase
+    .from("garments")
+    .select(`
+      *,
+      styles (
+        id,
+        name
+      )
+    `)
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: false });
 }
