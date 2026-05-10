@@ -14,7 +14,7 @@ type GarmentFormProps = {
 export default function GarmentForm({
   initialData,
   mode = "create",
-  styles,
+  styles = [],
 }: GarmentFormProps) {
   const router = useRouter();
 
@@ -80,37 +80,22 @@ export default function GarmentForm({
         </div>
 
         <div className="form-group">
-            <label htmlFor="style">Estilo</label>
-
-            <select
-              id="style"
-              value={form.style_id}
-              onChange={(e) =>
-                setForm({ ...form, style_id: e.target.value })
-              }
-              required
-            >
-              <option value="">Selecciona un estilo</option>
-
-              {styles.map((style) => (
-                <option key={style.id} value={style.id}>
-                  {style.name}
-                </option>
-              ))}
-            </select>
-        </div>
-
-        <div className="form-group">
           <label htmlFor="size">Talla</label>
-          <input
+          <select
             id="size"
-            type="text"
-            placeholder="M"
             value={form.size}
             onChange={(e) => setForm({ ...form, size: e.target.value })}
             required
-          />
-        </div>
+        >
+            <option value="">Selecciona una talla</option>
+            <option value="XS">XS</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+            <option value="XXL">XXL</option>
+         </select>
+      </div>
 
         <div className="form-group">
           <label htmlFor="brand">Marca</label>
@@ -122,6 +107,27 @@ export default function GarmentForm({
             onChange={(e) => setForm({ ...form, brand: e.target.value })}
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="style">Estilo</label>
+
+          <select
+            id="style"
+            value={form.style_id}
+            onChange={(e) =>
+              setForm({ ...form, style_id: e.target.value })
+            }
+            required
+           >
+         <option value="">Selecciona un estilo</option>
+
+          {styles.map((style) => (
+            <option key={style.id} value={style.id}>
+              {style.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
         <div className="form-group">
           <label htmlFor="condition">Estado</label>

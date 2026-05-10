@@ -1,5 +1,6 @@
 import GarmentForm from "@/components/garments/GarmentForm";
 import { Garment } from "@/types/garment";
+import { getAllStyles } from "@/models/style.model";
 
 type EditPageProps = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,7 @@ async function getGarment(id: string): Promise<Garment | null> {
 export default async function EditGarmentPage({ params }: EditPageProps) {
   const { id } = await params;
   const garment = await getGarment(id);
+  const { data: styles } = await getAllStyles();
 
   if (!garment) {
     return (
@@ -35,7 +37,11 @@ export default async function EditGarmentPage({ params }: EditPageProps) {
     <section className="page-section">
       <div className="container">
         <h1>Editar prenda</h1>
-        <GarmentForm initialData={garment} mode="edit" />
+        <GarmentForm
+          initialData={garment}
+          mode="edit"
+          styles={styles ?? []}
+        />
       </div>
     </section>
   );

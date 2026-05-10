@@ -6,6 +6,8 @@ import {
   getGarmentById,
   updateGarment,
 } from "@/models/garment.model";
+import { validateGarmentPayload } from "@/lib/validations/garment.validation";
+import { getStyleById } from "@/models/style.model";
 
 export async function indexGarmentsController() {
   const { data, error } = await getAllGarments();
@@ -27,24 +29,44 @@ export async function showGarmentController(id: string) {
   return NextResponse.json(data, { status: 200 });
 }
 
+async function validateStyleExists(styleId: string) {
+  const { data: style, error } = await getStyleById(styleId);
+
+  if (error || !style) {
+    return false;
+  }
+
+  return true;
+}
+
 export async function storeGarmentController(req: NextRequest) {
   const body = await req.json();
 
-  const { title, description, size, brand, condition } = body;
+  const validationError = validateGarmentPayload(body);
 
-  if (!title || !size || !condition) {
+  if (validationError) {
     return NextResponse.json(
-      { error: "Title, size and condition are required" },
-      { status: 422 }
+      { error: validationError },
+      { status: 400 }
+    );
+  }
+
+  const styleExists = await validateStyleExists(body.style_id);
+
+  if (!styleExists) {
+    return NextResponse.json(
+      { error: "El estilo seleccionado no existe en la base de datos." },
+      { status: 400 }
     );
   }
 
   const { data, error } = await createGarment({
-    title,
-    description,
-    size,
-    brand,
-    condition,
+    title: body.title,
+    description: body.description,
+    size: body.size,
+    brand: body.brand,
+    condition: body.condition,
+    style_id: body.style_id,
   });
 
   if (error) {
@@ -60,21 +82,31 @@ export async function updateGarmentController(
 ) {
   const body = await req.json();
 
-  const { title, description, size, brand, condition } = body;
+  const validationError = validateGarmentPayload(body);
 
-  if (!title || !size || !condition) {
+  if (validationError) {
     return NextResponse.json(
-      { error: "Title, size and condition are required" },
-      { status: 422 }
+      { error: validationError },
+      { status: 400 }
+    );
+  }
+
+  const styleExists = await validateStyleExists(body.style_id);
+
+  if (!styleExists) {
+    return NextResponse.json(
+      { error: "El estilo seleccionado no existe en la base de datos." },
+      { status: 400 }
     );
   }
 
   const { data, error } = await updateGarment(id, {
-    title,
-    description,
-    size,
-    brand,
-    condition,
+    title: body.title,
+    description: body.description,
+    size: body.size,
+    brand: body.brand,
+    condition: body.condition,
+    style_id: body.style_id,
   });
 
   if (error) {

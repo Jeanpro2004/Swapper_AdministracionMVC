@@ -21,7 +21,7 @@ export async function getGarmentById(id: string) {
 }
 
 export async function createGarment(data: GarmentPayload) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   return supabase
     .from("garments")
@@ -31,6 +31,7 @@ export async function createGarment(data: GarmentPayload) {
       size: data.size,
       brand: data.brand || null,
       condition: data.condition,
+      style_id: data.style_id,
     })
     .select()
     .single();
