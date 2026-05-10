@@ -6,6 +6,7 @@ export type Garment = {
   size: string;
   brand?: string | null;
   condition: string;
+  style_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -16,4 +17,5 @@ export type GarmentPayload = {
   size: string;
   brand?: string;
   condition: string;
+  style_id: string;
 };
