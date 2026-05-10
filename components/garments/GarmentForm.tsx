@@ -3,25 +3,29 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Garment } from "@/types/garment";
+import { Style } from "@/types/style";
 
 type GarmentFormProps = {
   initialData?: Garment;
   mode?: "create" | "edit";
+  styles: Style[];
 };
 
 export default function GarmentForm({
   initialData,
   mode = "create",
+  styles,
 }: GarmentFormProps) {
   const router = useRouter();
 
-  const [form, setForm] = useState({
-    title: initialData?.title || "",
-    description: initialData?.description || "",
-    size: initialData?.size || "",
-    brand: initialData?.brand || "",
-    condition: initialData?.condition || "",
-  });
+ const [form, setForm] = useState({
+  title: initialData?.title || "",
+  description: initialData?.description || "",
+  size: initialData?.size || "",
+  brand: initialData?.brand || "",
+  condition: initialData?.condition || "",
+  style_id: initialData?.style_id || "",
+});
 
   const [loading, setLoading] = useState(false);
 
@@ -76,16 +80,24 @@ export default function GarmentForm({
         </div>
 
         <div className="form-group">
-          <label htmlFor="description">Descripción</label>
-          <textarea
-            id="description"
-            rows={4}
-            placeholder="Describe la prenda"
-            value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
-          />
+            <label htmlFor="style">Estilo</label>
+
+            <select
+              id="style"
+              value={form.style_id}
+              onChange={(e) =>
+                setForm({ ...form, style_id: e.target.value })
+              }
+              required
+            >
+              <option value="">Selecciona un estilo</option>
+
+              {styles.map((style) => (
+                <option key={style.id} value={style.id}>
+                  {style.name}
+                </option>
+              ))}
+            </select>
         </div>
 
         <div className="form-group">
